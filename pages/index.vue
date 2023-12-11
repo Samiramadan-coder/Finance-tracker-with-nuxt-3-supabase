@@ -62,11 +62,9 @@
 import { transactionViewOptions } from "~/constants";
 import type { Transaction } from "~/interfaces";
 
-const viewSelected = ref<string>(transactionViewOptions[1]);
-
 const supabase = useSupabaseClient();
-
 const transactions = ref<Transaction[]>([]);
+const viewSelected = ref<string>(transactionViewOptions[1]);
 
 const { data, pending } = await useAsyncData<Transaction[]>(
   "transactions",
@@ -81,7 +79,11 @@ const { data, pending } = await useAsyncData<Transaction[]>(
 transactions.value = data.value || [];
 
 const transactionsGroupedByDate = computed(() => {
-  let grouped: { [key: string]: Transaction[] } = {};
+  type Grouped = {
+    [key: string]: Transaction[];
+  };
+
+  let grouped: Grouped = {};
 
   for (const transaction of transactions.value) {
     const date = new Date(transaction.created_at).toISOString().split("T")[0];

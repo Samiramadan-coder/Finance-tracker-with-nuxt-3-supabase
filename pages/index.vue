@@ -40,16 +40,57 @@
   </section>
 
   <section>
-    <Transaction />
-    <Transaction />
-    <Transaction />
-    <Transaction />
-    <Transaction />
+    <div
+      v-for="(transactionOnDay, date) in transactionsGroupedByDate"
+      :key="date"
+      class="mb-10"
+    >
+      <DailyTransactionSummary
+        :date="typeof date === 'string' ? date : ''"
+        :transactions="transactionOnDay"
+      />
+      <Transaction
+        v-for="transaction in transactionOnDay"
+        :key="transaction.id"
+        :transaction="transaction"
+      />
+    </div>
   </section>
 </template>
 
 <script setup lang="ts">
 import { transactionViewOptions } from "~/constants";
+import type { Transaction } from "~/interfaces";
 
 const viewSelected = ref<string>(transactionViewOptions[1]);
+
+const supabase = useSupabaseClient();
+
+const transactions = ref<Transaction[]>([]);
+
+const { data, pending } = await useAsyncData<Transaction[]>(
+  "transactions",
+  async () => {
+    const { data, error } = await supabase.from("transactions").select();
+
+    if (error) return [];
+    return data;
+  }
+);
+
+transactions.value = data.value || [];
+
+const transactionsGroupedByDate = computed(() => {
+  let grouped: { [key: string]: Transaction[] } = {};
+
+  for (const transaction of transactions.value) {
+    const date = new Date(transaction.created_at).toISOString().split("T")[0];
+
+    if (!grouped[date]) grouped[date] = [];
+
+    grouped[date].push(transaction);
+  }
+
+  return grouped;
+});
 </script>

@@ -12,9 +12,13 @@
   "devDependencies": {
     "@nuxt/devtools": "latest",
     "@nuxthq/ui": "^2.7.0",
+    "@nuxtjs/supabase": "^1.1.4",
     "nuxt": "^3.8.2",
     "sass": "^1.69.5",
     "vue": "^3.3.10",
     "vue-router": "^4.2.5"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
   }
 }

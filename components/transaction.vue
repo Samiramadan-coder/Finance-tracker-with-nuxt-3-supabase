@@ -4,11 +4,11 @@
   >
     <div class="flex items-center justify-between">
       <div class="flex items-center space-x-1">
-        <UIcon name="i-heroicons-arrow-up-right" class="text-green-600" />
-        <div>Salary</div>
+        <UIcon :name="icon" :class="[iconColor]" />
+        <div>{{ transaction.description }}</div>
       </div>
       <div>
-        <UBadge color="white">Category</UBadge>
+        <UBadge color="white">{{ transaction.category }}</UBadge>
       </div>
     </div>
 
@@ -20,6 +20,7 @@
             color="white"
             variant="ghost"
             trailing-icon="i-heroicons-ellipsis-horizontal"
+            :loading="isLoading"
           />
         </UDropdown>
       </div>
@@ -28,7 +29,50 @@
 </template>
 
 <script setup lang="ts">
-const { currency } = useCurrency(3000);
+import type { Transaction } from "~/interfaces";
+
+const props = defineProps({
+  transaction: {
+    type: Object as PropType<Transaction>,
+    required: true,
+  },
+});
+const emit = defineEmits(["deleted"]);
+const isIncome = computed((): boolean => props.transaction.type === "Income");
+const icon = computed((): string =>
+  isIncome.value ? "i-heroicons-arrow-up-right" : "i-heroicons-arrow-down-left"
+);
+const iconColor = computed((): string =>
+  isIncome.value ? "text-green-600" : "text-red-600"
+);
+
+const { currency } = useCurrency(props.transaction.amount);
+
+const isLoading = ref<boolean>(false);
+const toast = useToast();
+const subabase = useSupabaseClient();
+
+const deleteTransaction = async (): Promise<void> => {
+  isLoading.value = true;
+
+  try {
+    await subabase.from("transactions").delete().eq("id", props.transaction.id);
+    toast.add({
+      title: "Transaction Deleted",
+      icon: "i-heroicons-check-circle",
+      color: "green",
+    });
+    emit("deleted", props.transaction.id);
+  } catch (err) {
+    toast.add({
+      title: "Transaction Deleted",
+      icon: "i-heroicons-exclamation-circle",
+      color: "red",
+    });
+  } finally {
+    isLoading.value = false;
+  }
+};
 
 interface Item {
   label: string;
@@ -46,7 +90,7 @@ const items: Array<Array<Item>> = [
     {
       label: "Delete",
       icon: "i-heroicons-trash-20-solid",
-      click: () => console.log("Delete"),
+      click: deleteTransaction,
     },
   ],
 ];

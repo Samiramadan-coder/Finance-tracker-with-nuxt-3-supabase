@@ -121,7 +121,10 @@ const fetchTransactions = async (): Promise<Transaction[]> => {
     const { data, pending } = await useAsyncData<Transaction[]>(
       "transactions",
       async () => {
-        const { data, error } = await supabase.from("transactions").select();
+        const { data, error } = await supabase
+          .from("transactions")
+          .select()
+          .order("created_at", { ascending: false });
 
         if (error) return [];
         return data;
@@ -152,6 +155,12 @@ const transactionsGroupedByDate = computed(() => {
 
     grouped[date].push(transaction);
   }
+
+  // const sortedKeys = Object.keys(grouped).sort().reverse();
+
+  // const sortedGrouped: Grouped = {};
+
+  // sortedKeys.forEach((key) => (sortedGrouped[key] = grouped[key]));
 
   return grouped;
 });

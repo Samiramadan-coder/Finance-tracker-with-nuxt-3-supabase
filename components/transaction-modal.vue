@@ -18,7 +18,11 @@
         </UFormGroup>
 
         <UFormGroup label="Amount" :required="true" name="amount" class="mb-4">
-          <UInput type="number" placeholder="Amount" v-model="state.amount" />
+          <UInput
+            type="number"
+            placeholder="Amount"
+            v-model.number="state.amount"
+          />
         </UFormGroup>
 
         <UFormGroup
@@ -57,7 +61,13 @@
           />
         </UFormGroup>
 
-        <UButton type="submit" color="black" variant="solid" label="Save" />
+        <UButton
+          type="submit"
+          color="black"
+          variant="solid"
+          label="Save"
+          :loading="isLoading"
+        />
       </UForm>
     </UCard>
   </UModal>
@@ -100,7 +110,7 @@ const schema = z.intersection(
   defaultSchema
 );
 
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits(["update:modelValue", "saved"]);
 
 const props = defineProps({
   modelValue: Boolean,
@@ -115,6 +125,9 @@ const isOpen = computed({
 });
 
 const form = ref();
+const isLoading = ref(false);
+const supabase = useSupabaseClient();
+const toast = useToast();
 
 const initialState = {
   type: undefined,
@@ -130,12 +143,47 @@ const state = ref({
 
 const resetForm = (): void => {
   Object.assign(state.value, initialState);
-  form.value.clear;
+  // form.value.clear;
 };
 
 const save = async () => {
-  if (form.value.errors.length) return;
+  // console.log(form.value);
+  // if (form.value.error.length) return;
 
-  // Store into the supabase
+  // const error = await form.value.validate();
+  // console.log(error);
+
+  // return;
+
+  isLoading.value = true;
+  try {
+    const { error } = await supabase
+      .from("transactions")
+      .upsert({ ...state.value });
+
+    if (!error) {
+      toast.add({
+        title: "Transaction Saved",
+        icon: "i-heroicons-check-circle",
+      });
+
+      isOpen.value = false;
+
+      emit("saved");
+
+      return;
+    }
+
+    throw error;
+  } catch (e) {
+    toast.add({
+      title: "Transaction not Saved",
+      description: e.message,
+      icon: "i-heroicons-check-circle",
+      color: "red",
+    });
+  } finally {
+    isLoading.value = false;
+  }
 };
 </script>

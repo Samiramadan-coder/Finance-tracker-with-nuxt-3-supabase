@@ -121,8 +121,10 @@ const fetchTransactions = async (): Promise<Transaction[]> => {
     const { data, pending } = await useAsyncData<Transaction[]>(
       "transactions",
       async () => {
-        const { data, error } = await supabase.from("transactions").select();
-        .order("created_at", { ascending: false });
+        const { data, error } = await supabase
+          .from("transactions")
+          .select()
+          .order("created_at", { ascending: false });
 
         if (error) return [];
         return data;
